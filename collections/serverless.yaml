@@ -1,0 +1,24 @@
+service: serverless-task
+frameworkVersion: '3'
+
+useDotenv: true
+
+provider:
+  name: aws
+  runtime: java11
+
+  stage: dev
+  region: us-east-1
+
+  environment:
+    PETFINDER_API_KEY: ${env:PETFINDER_API_KEY}
+    PETFINDER_SECRET_KEY: ${env:PETFINDER_SECRET_KEY}
+    ....
+    enter code here
+resources:
+  Resources:
+    S3Bucket:
+      DeletionPolicy: Retain
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${env:S3_BUCKET_NAME}
