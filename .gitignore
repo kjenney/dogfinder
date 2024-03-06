@@ -1,1 +1,6 @@
 .env
+node_modules
+petpy
+.serverless
+.DS_Store
+package*

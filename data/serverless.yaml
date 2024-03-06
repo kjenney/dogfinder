@@ -1,0 +1,58 @@
+service: data
+
+configValidationMode: error
+
+package:
+  individually: true
+  patterns:
+    - '!README.md'
+
+provider:
+  name: aws
+  region: us-east-1
+  runtime: python3.11
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action: 
+            - 'athena:start_query_execution'
+            - 'athena:get_query_execution'
+          Resource: '*'
+
+resources:
+  Resources:
+    AthenaResultsBucket:
+      Type: AWS::S3::Bucket
+    AthenaWorkGroup:
+      Type: "AWS::Athena::WorkGroup"
+      Properties:
+        Name: "data"
+        Description: "Data workgroup for Athena queries"
+        WorkGroupConfiguration:
+          RequesterPaysEnabled: false
+          EnforceWorkGroupConfiguration: false
+          EngineVersion:
+            SelectedEngineVersion: "AUTO"
+        PublishCloudWatchMetricsEnabled: false
+        ResultConfiguration:
+          OutputLocation: !Join
+          - ''
+          - - 's3://'
+            - !Ref AthenaResultsBucket
+            - '/queries/'
+        State: ENABLED
+        Tags:
+         - Key: "purpose"
+           Value: "data lambda"
+      
+
+functions:
+  myFunction:
+    handler: handler.handler
+    layers:
+      - arn:aws:lambda:${self:provider.region}:336392948345:layer:AWSSDKPandas-Python311:8
+    environment:
+      S3_BUCKET_NAME: !Ref AthenaResultsBucket
+
+

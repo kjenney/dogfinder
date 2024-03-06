@@ -1,14 +1,11 @@
-service: collections
+service: user
 
 configValidationMode: error
 
 package:
   individually: true
-  patterns:
-    - '!node_modules/**'
-    - '!package*'
-    - '!petpy/**'
-    - '!README.md'
+  exclude:
+    - ./**
 
 provider:
   name: aws
@@ -27,7 +24,7 @@ provider:
             Fn::Join:
               - ''
               - - "arn:aws:s3:::"
-                - "Ref" : "CollectionsBucket"
+                - "Ref" : "UserBucket"
                 - '/*'
 
 plugins:
@@ -35,30 +32,16 @@ plugins:
 
 resources:
   Resources:
-    CollectionsBucket:
+    UserBucket:
       Type: AWS::S3::Bucket
 
 functions:
   myFunction:
     handler: handler.handler
-    layers:
-      - arn:aws:lambda:${self:provider.region}:336392948345:layer:AWSSDKPandas-Python311:8
-      - !Ref PetpyLambdaLayer
     environment:
-      S3_BUCKET_NAME: !Ref CollectionsBucket
+      S3_BUCKET_NAME: !Ref UserBucket
     package:
-      patterns:
+      include:
         - 'handler.py'
-
-layers:
-  petpy:
-    path: petpy
-    name: ${sls:stage}-petpy
-    description: Petpy module
-    compatibleRuntimes:
-      - python3.11
-    compatibleArchitectures:
-      - x86_64
-    retain: false
 
 
