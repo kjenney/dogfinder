@@ -9,6 +9,7 @@ package:
 
 provider:
   name: aws
+  stage: dev
   region: us-east-1
   runtime: python3.11
   iam:
@@ -20,33 +21,88 @@ provider:
             - 'athena:get_query_execution'
           Resource: '*'
 
+custom:
+  stage: ${opt:stage, self:provider.stage}
+
 resources:
+  Parameters: 
+    CollectionsBucketName: 
+      Type: String
+      Default: collections-dev-collectionsbucket-h7k1zmrzqvxb
+      Description: The name of the S3 bucket containing the generated Parquet files
   Resources:
+    GlueCrawlerRole:
+      Type: AWS::IAM::Role
+      Properties:
+        AssumeRolePolicyDocument:
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - glue.amazonaws.com
+              Action:
+                - sts:AssumeRole
+        ManagedPolicyArns:
+          - !Sub "arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole"
+        Policies:
+          - PolicyName: GlueCrawlerPolicy
+            PolicyDocument:
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - s3:GetObject
+                    - s3:ListBucket
+                  Resource:
+                    - !Join ["", ["arn:aws:s3:::", !Ref CollectionsBucketName, "/*"]]
+                    - !Join ["", ["arn:aws:s3:::", !Ref CollectionsBucketName]]
+                - Effect: Allow
+                  Action:
+                    - athena:StartQueryExecution
+                  Resource:
+                    !Sub "arn:aws:athena:${AWS::Region}:${AWS::AccountId}:workgroup/${AthenaWorkgroup}"
+                  Condition:
+                    StringEquals:
+                      workgroup: !Ref AthenaWorkgroup
     AthenaResultsBucket:
       Type: AWS::S3::Bucket
-    AthenaWorkGroup:
-      Type: "AWS::Athena::WorkGroup"
       Properties:
-        Name: "data"
-        Description: "Data workgroup for Athena queries"
+        BucketName: data-${self:custom.stage}-athena-results
+    GlueDatabase:
+      Type: AWS::Glue::Database
+      Properties:
+        CatalogId: !Ref AWS::AccountId
+        DatabaseInput:
+          Name: data-${self:custom.stage}-db
+    GlueCrawler:
+      Type: AWS::Glue::Crawler
+      Properties:
+        Role: !Ref GlueCrawlerRole
+        DatabaseName: !Ref GlueDatabase
+        Name: data-${self:custom.stage}-crawler
+        Targets:
+          S3Targets:
+            - Path: !Sub "s3://${CollectionsBucketName}/"
+        Schedule: 
+          ScheduleExpression: "cron(0/10 * ? * MON-FRI *)"
+        Configuration: "{\"Version\":1.0,\"CrawlerOutput\":{\"Partitions\":{\"AddOrUpdateBehavior\":\"InheritFromTable\"},\"Tables\":{\"AddOrUpdateBehavior\":\"MergeNewColumns\"}}}"
+    AthenaWorkgroup:
+      Type: AWS::Athena::WorkGroup
+      Properties:
+        Name: data-${self:custom.stage}-workgroup
+        Description: "Data workgroup for Athena queries for data-${self:custom.stage}"
         WorkGroupConfiguration:
-          RequesterPaysEnabled: false
-          EnforceWorkGroupConfiguration: false
-          EngineVersion:
-            SelectedEngineVersion: "AUTO"
-        PublishCloudWatchMetricsEnabled: false
-        ResultConfiguration:
-          OutputLocation: !Join
-          - ''
-          - - 's3://'
-            - !Ref AthenaResultsBucket
-            - '/queries/'
-        State: ENABLED
+          ResultConfiguration:
+            OutputLocation: !Sub "s3://${CollectionsBucketName}-athena-results/"
         Tags:
-         - Key: "purpose"
-           Value: "data lambda"
-      
-
+          - Key: "purpose"
+            Value: "data lambda"
+  Outputs:
+    GlueDatabaseName:
+      Description: Name of the Glue Database
+      Value: !Ref GlueDatabase
+    AthenaWorkgroupName:
+      Description: Name of the Athena Workgroup
+      Value: !Ref AthenaWorkgroup
 functions:
   myFunction:
     handler: handler.handler
