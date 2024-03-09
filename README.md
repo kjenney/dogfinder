@@ -21,3 +21,14 @@ An AWS Cognito pool configured to be used by the website.
 Static files including Javascript hosted on an S3 bucket.
 
 
+
+## Depoyment
+
+Deploy in this order:
+
+1. Collections
+2. Data
+3. User
+4. Site
+
+See the deployment instructions in each component to deploy it.
