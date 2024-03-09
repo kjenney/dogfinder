@@ -6,4 +6,5 @@ To get stack outputs use `sls info --verbose`
 
 ## TODO
 
-Refine the permissions do just what's needed
+* Add an API gateway
+* Refine the permissions do just what's needed

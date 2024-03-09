@@ -4,6 +4,7 @@ import os
 import time
 import urllib.parse
 import codecs
+import json
 
 GLUE_DATABASE_NAME = os.getenv('GLUE_DATABASE_NAME')
 RESULTS_BUCKET_NAME = os.getenv('RESULTS_BUCKET_NAME')
@@ -40,22 +41,27 @@ def run_query(query):
                 return None
                 break
 
-        results_file = response['QueryExecution']['ResultConfiguration']['OutputLocation']
-        parsed_url = urllib.parse.urlparse(results_file)
-        bucket_name = parsed_url.netloc.split("/")[0]
-        filename = parsed_url.path.split("/")[-1]
-        
-        s3 = boto3.resource("s3")
-        s3_object = s3.Object(bucket_name, filename)
-        line_stream = codecs.getreader("utf-8")
-
-        print("Output from the query is:")
-        for line in line_stream(s3_object.get()['Body']):
-            print(line)
+        response = athena.get_query_results(QueryExecutionId=query_execution_id)
+        data = response['ResultSet']['Rows']
+        results = []
+        for row in data[1:]:
+            row_dict = {}
+            for i, col in enumerate(row['Data']):
+                row_dict[data[0]['Data'][i]['VarCharValue']] = col['VarCharValue']
+            results.append(row_dict)
+        return results
 
     except Exception as e:
         print(f"An error occurred while running the Athena query: {str(e)}")
 
 def handler(event, context):
     print("Running data handler")
-    run_query(f"select * from {GLUE_TABLE_NAME}")
+    query_results = run_query(f"select * from {GLUE_TABLE_NAME}")
+    return {
+        'statusCode': 200,
+        'headers': {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": 'GET, POST, PUT, DELETE, OPTIONS'
+        },
+        'body': query_results
+    }

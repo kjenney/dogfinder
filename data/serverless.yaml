@@ -20,6 +20,7 @@ provider:
           Action: 
             - 'athena:StartQueryExecution'
             - 'athena:GetQueryExecution'
+            - 'athena:GetQueryResults'
           Resource: '*'
         - Effect: Allow
           Action:
