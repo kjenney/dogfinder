@@ -12,6 +12,10 @@ provider:
   stage: dev
   region: us-east-1
   runtime: python3.11
+  httpApi:
+    cors: true
+  logs:
+    httpApi: true
   timeout: 10
   iam:
     role:
@@ -119,6 +123,8 @@ resources:
 functions:
   myFunction:
     handler: handler.handler
+    events:
+      - httpApi: 'Get /'
     layers:
       - arn:aws:lambda:${self:provider.region}:336392948345:layer:AWSSDKPandas-Python311:8
     environment:

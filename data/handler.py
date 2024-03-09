@@ -57,11 +57,13 @@ def run_query(query):
 def handler(event, context):
     print("Running data handler")
     query_results = run_query(f"select * from {GLUE_TABLE_NAME}")
-    return {
+    response = {
         'statusCode': 200,
         'headers': {
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Methods": 'GET, POST, PUT, DELETE, OPTIONS'
         },
-        'body': query_results
+        'body': json.dumps(query_results)
     }
+    print(response)
+    return response
