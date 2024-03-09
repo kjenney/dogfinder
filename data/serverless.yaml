@@ -32,8 +32,9 @@ provider:
             #     - '-athena-results/*'
         - Effect: Allow
           Action:
-            - 'glue:GetDatabase'
-            - 'glue:GetTables'
+            - 'glue:*'
+            #- 'glue:GetDatabase'
+            #- 'glue:GetTables'
           Resource: '*'
 
 custom:

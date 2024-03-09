@@ -17,8 +17,7 @@ def run_query(query):
         query_execution_id = athena.start_query_execution(
             QueryString=query,
             QueryExecutionContext={
-                'Database': GLUE_DATABASE_NAME #,
-                #'Catalog': 'AwsDataCatalog'
+                'Database': GLUE_DATABASE_NAME
             },
             ResultConfiguration={
                 'OutputLocation': f's3://{RESULTS_BUCKET_NAME}/athena-results/'
@@ -42,7 +41,6 @@ def run_query(query):
                 break
 
         results_file = response['QueryExecution']['ResultConfiguration']['OutputLocation']
-        print(results_file)
         parsed_url = urllib.parse.urlparse(results_file)
         bucket_name = parsed_url.netloc.split("/")[0]
         filename = parsed_url.path.split("/")[-1]
@@ -55,18 +53,9 @@ def run_query(query):
         for line in line_stream(s3_object.get()['Body']):
             print(line)
 
-        #df = pd.read_csv(results_file, header=0)
-
-        # Display the data for debugging purposes
-        #print("Data retrieved from the query:")
-        #print(df.head())
-
     except Exception as e:
         print(f"An error occurred while running the Athena query: {str(e)}")
 
 def handler(event, context):
     print("Running data handler")
-    # Run the query
-    #run_query(f"SELECT * FROM \"AwsDataCatalog\".\"{GLUE_DATABASE_NAME}\".\"{GLUE_TABLE_NAME}\" limit 10;")
-    #run_query("show tables")
     run_query(f"select * from {GLUE_TABLE_NAME}")
