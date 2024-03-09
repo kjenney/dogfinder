@@ -37,6 +37,18 @@ resources:
   Resources:
     CollectionsBucket:
       Type: AWS::S3::Bucket
+  Outputs:
+    CollectionsBucket:
+      Description: Name of the Collections Bucket
+      Value: !Ref CollectionsBucket
+    CollectionsBucketUnderscore:
+      Description: Name of the Collections Bucket replaced with underscores - used by Glue Crawler
+      Value: 
+        Fn::Join:
+          - '_'
+          - Fn::Split:
+            - '-'
+            - !Ref CollectionsBucket
 
 functions:
   myFunction:

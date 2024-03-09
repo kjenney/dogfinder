@@ -17,8 +17,21 @@ provider:
       statements:
         - Effect: Allow
           Action: 
-            - 'athena:start_query_execution'
-            - 'athena:get_query_execution'
+            - 'athena:StartQueryExecution'
+            - 'athena:GetQueryExecution'
+          Resource: '*'
+        - Effect: Allow
+          Action:
+            - 's3:*'
+          Resource: '*'
+            # Fn::Join:
+            #   - ''
+            #   - - "arn:aws:s3:::"
+            #     - "Ref" : "${cf:collections-dev.CollectionsBucket}"
+            #     - '-athena-results/*'
+        - Effect: Allow
+          Action:
+            - 'glue:GetDatabase'
           Resource: '*'
 
 custom:
@@ -28,7 +41,7 @@ resources:
   Parameters: 
     CollectionsBucketName: 
       Type: String
-      Default: collections-dev-collectionsbucket-h7k1zmrzqvxb
+      Default: ${cf:collections-dev.CollectionsBucket}
       Description: The name of the S3 bucket containing the generated Parquet files
   Resources:
     GlueCrawlerRole:
@@ -63,10 +76,6 @@ resources:
                   Condition:
                     StringEquals:
                       workgroup: !Ref AthenaWorkgroup
-    AthenaResultsBucket:
-      Type: AWS::S3::Bucket
-      Properties:
-        BucketName: data-${self:custom.stage}-athena-results
     GlueDatabase:
       Type: AWS::Glue::Database
       Properties:
@@ -109,6 +118,9 @@ functions:
     layers:
       - arn:aws:lambda:${self:provider.region}:336392948345:layer:AWSSDKPandas-Python311:8
     environment:
-      S3_BUCKET_NAME: !Ref AthenaResultsBucket
+      RESULTS_BUCKET_NAME: !Sub "${CollectionsBucketName}-athena-results"
+      GLUE_DATABASE_NAME: !Ref GlueDatabase
+      ATHENA_WORKGROUP_NAME: !Ref AthenaWorkgroup
+      GLUE_TABLE_NAME: ${cf:collections-dev.CollectionsBucketUnderscore}
 
 
