@@ -1,0 +1,35 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Resources:
+  MyWebsiteBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      WebsiteConfiguration:
+        IndexDocument: index.html  # Replace with your index document name
+        ErrorDocument: error.html  # Replace with your error document name
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
+  S3BucketPolicy:
+    Type: 'AWS::S3::BucketPolicy'
+    Properties:
+      Bucket: !Ref MyWebsiteBucket
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Action:
+              - 's3:GetObject'
+            Effect: Allow
+            Principal: '*'
+            Resource: !Join 
+              - ''
+              - - 'arn:aws:s3:::'
+                - !Ref MyWebsiteBucket
+                - /*
+Outputs:
+  WebsiteURL:
+    Description: URL of the website hosted on S3 bucket
+    Value: !Sub
+      - http://${MyWebsiteBucket}.s3-website.${AWS::Region}.amazonaws.com
+      - {}

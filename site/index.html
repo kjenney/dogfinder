@@ -1,0 +1,32 @@
+<html>
+<head><title>Test</title>
+<script type="text/javascript">
+  function getData() {
+  const url = 'https://nwbu7lw446.execute-api.us-east-1.amazonaws.com/';
+
+  fetch(url)
+    .then(response => response.json()) // Parse the JSON response
+    .then(data => {
+      // Process the data here
+      console.log(data); // This will print the data to your browser's console
+
+      // You can also update the HTML content to display the data
+      const outputElement = document.getElementById('output'); // Assuming you have an element with id="output"
+      outputElement.textContent = JSON.stringify(data, null, 2); // Pretty-print the JSON data
+    })
+    .catch(error => {
+      console.error('Error fetching data:', error);
+      // Handle any errors here, such as displaying an error message to the user
+    }); 
+  }
+  getData();
+</script>
+</head>
+<body>
+
+<h1>Dog's available for adoption</h1>
+<h3 id="output"></id>
+
+</body>
+</html>
+
