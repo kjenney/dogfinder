@@ -33,6 +33,7 @@ provider:
         - Effect: Allow
           Action:
             - 'glue:GetDatabase'
+            - 'glue:GetTables'
           Resource: '*'
 
 custom:
