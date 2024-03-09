@@ -12,6 +12,7 @@ provider:
   stage: dev
   region: us-east-1
   runtime: python3.11
+  timeout: 10
   iam:
     role:
       statements:
@@ -92,7 +93,7 @@ resources:
           S3Targets:
             - Path: !Sub "s3://${CollectionsBucketName}/"
         Schedule: 
-          ScheduleExpression: "cron(0/10 * ? * MON-FRI *)"
+          ScheduleExpression:  "cron(0 0 ? * * *)"
         Configuration: "{\"Version\":1.0,\"CrawlerOutput\":{\"Partitions\":{\"AddOrUpdateBehavior\":\"InheritFromTable\"},\"Tables\":{\"AddOrUpdateBehavior\":\"MergeNewColumns\"}}}"
     AthenaWorkgroup:
       Type: AWS::Athena::WorkGroup

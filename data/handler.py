@@ -25,20 +25,19 @@ def run_query(query):
         )['QueryExecutionId']
 
         response = athena.get_query_execution(QueryExecutionId=query_execution_id)
+        print(f"Query {query_execution_id} running")
         while True:
             status = response['QueryExecution']['Status']['State']
-
             if status == 'SUCCEEDED':
                 break
-
             elif status == 'RUNNING' or status == 'QUEUED':
-                # Wait for the query to finish executing
-                time.sleep(60)
+                time.sleep(5)
                 response = athena.get_query_execution(QueryExecutionId=query_execution_id)
-
             elif status == 'FAILED':
-                print("Query execution failed:")
+                reason = response['QueryExecution']['Status']['StateChangeReason']
+                print(f"Query execution failed with: {reason}")
                 return None
+                break
 
         results_file = response['QueryExecution']['ResultSummary']['Location'] + '/' + response['QueryExecution']['ResultSummary']['S3Object']
         df = pd.read_csv(results_file, header=0)
